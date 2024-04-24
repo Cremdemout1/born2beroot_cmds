@@ -1,0 +1,135 @@
+
+        SUDO:
+su-             -> login as root
+apt update      -> fetches system updates. use (-y) to automate acceptence of permissions
+apt upgrade     -> installs updates
+visudo          -> opens info file of sudoers file
+reboot          -> reboots machine
+sudo -V         -> shows sudo version
+blkid           -> displays UUIDs
+
+-create and manage users and groups:
+
+getent group                    -> displays list of all current groups
+sudo addgroup (groupname)       -> creates group
+sudo adduser (user) (groupname) -> adds user to specified group
+usermod (group) (username)      -> modifies user account. use (-a) to append or keep user in existing group while adding to new.
+sudo deluser (username)         -> removes user
+hostname                        -> outputs hostname
+hostname -I                     -> outputs public IP
+sudo nano /etc/hostname         -> access to file which contains hostname(can change at will)
+        SSH:
+
+ssh sshusr@(IP)/(hostname) -p (port number) -> login from remote linux system
+ssh (user)@localhost -p (port number)       -> "    "
+
+service ssh status              -> shows status of SSH connection
+grep port /etc/ssh/sshd_config  -> reads file and shows you current port value  
+apt install openssh-server      -> installs module that is responsible for secure shell protocol for server connections
+systemctl status ssh            -> checks status of SSH service on the system
+vim /etc/ssh/ssh_config         -> opens SSH client configuration file
+vim /etc/ssh/sshd_config        -> opens SSH configuration file. in it you can find: port number, root login permission, Pw auth., SSH auth., user and group permissions, etc.
+restart ssh                     -> restart SSH for changes to apply
+service ssh restart             -> "    "
+
+        PAM(pluggable authentication module):
+
+Password policy changes:
+install libpam-pwquality        -> install PAM
+vim /etc/pam.d/common-Password  -> accesses PAM configuration file
+password requisites:
+-minlen = 10
+-ucredit = -1
+-lcredit = -1
+-dcredit = -1
+-maxrepeat = 3
+-rejectusername
+-difok = 7
+enforce_for_root
+
+inside /etc/sudoers.d/sudo_config:
+Defaults  passwd_tries=3                                        -> Total tries for entering the sudo password.
+Defaults  badpass_message="Mensaje de error personalizado"      -> The message that will show when the password failed.
+Defaults  logfile="/var/log/sudo/sudo_config"                   -> Path where will the sudo logs will be stored.
+Defaults  log_input, log_output                                 -> What will be logged
+Defaults  iolog_dir="/var/log/sudo"                             -> What will be logged
+Defaults  requiretty                                            -> TTY is required
+Defaults  secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"  -> folders excluded from sudo
+
+inside /etc/lgin.defs file:
+-password aging controls
+to manually change existing user's aging control:
+sudo chage -M (maximum age of PW in days) -m (mimimum age of PW in days) -W (receive warning this number of days before password invalidity) username
+
+        UFW:
+
+apt install ufw          -> install firewall module
+ufw enable               -> enable firewall
+ufw allow ssh            -> allow access from this PC 
+ufw allow (port_number)  -> allow secure connection from server to specified port
+ufw delete (rule number) -> delete rule
+ufw status numbered      -> show firewall rules numbered
+ufw reload               -> reloads firewall with added changes
+
+checking important info about server:
+
+head -n 2 /etc/os-release       -> OS info
+/usr/sbin/aa-status             -> apparmor status
+ss -tunlp                       -> port and SSH connection status
+/usr/sbin/ufw status            -> firewall status
+lsblk                           -> shows partitions
+
+
+make sure to create a rule of oracle in settings/network/advanced settings/create new rule/ host port=4242 guest port=4242 
+
+crontab -e               -> file where to set up recurring (or one time) scheduled command (* * * * * /path/)
+sudo crontab -u root -e  -> opens root user's crontab 
+
+FOR SCRIPT:
+
+architecture: uname -a                                  -> shows info of OS and account
+CPU physical: grep "physical id" /proc/cpuinfo | wc -l  -> outputs amount of times physical id is present inside cpuinfo file. Number also represents amount of physical ids
+nproc                                                   -> number of processors
+
+free --mega | awk '"Mem:" == $1 {print $3}               -> print total amount of memory
+{
+free --mega                                             -> show info of RAM
+awk '"Mem:" == $1 {print $3}                            -> if "Mem:" is encountered as the first element, print 3rd element
+}
+free --mega | awk '"Mem:" == $1 {print $2}               -> print memory being used
+free --mega | awk '"Mem:" == $1 {printf"%.2f", $3/$2*100}'-> prints element3/element2*100 with 2 digits after comma(.2f)
+
+disk storage:
+df -m                                                                   -> access disk inforation in megabytes
+grep -v "/exam"                                                         -> exclude what's inside brackets
+df -m | grep /dev/ | grep -v "/boot" | awk '{sum+=$3} END {print sum}'  -> prints used data in mb
+df -m | grep /dev/ | grep -v "/boot" | awk '{sum+=$2} END {printf("%.0fGb\n", sum/1024)}'       -> prints whole amount of data in GB
+df -m | grep /dev/ | grep -v "/boot" | awk '{sum+=$3} {total+=$2} END {printf("%d", sum/total*100)}'  -> prints percentage of storage used
+
+WHY TARGET /DEV: /dev usually indicates physical devices like hard drives, SSD and partitions, which represent accurate disk storage information
+
+CPU load:
+CPU load % = ((total CPU time - Idle CPU time)/ total CPU time) * 100
+or
+using sysstat module,
+mpstat | awk '"all" == $2 {used=100-$12} END {printf("%.1f", used)}'
+
+Last boot:
+who -b | awk '{date=$3} {time=$4} END {printf("%s %s", date, time)}'
+
+LVM use:
+if lsblk | grep -q "lvm" then echo "yes"; else echo "no"; fi;       -> checks if lvm is present in lsblkusing -q to supress output to only what we want
+
+TCP connections:
+ss -t -a | grep -c ESTAB         -> ss == socket stats/ -t == only TCP/ -a == search all/grep -c ESTAB == count amount of times ESTAB was found/ESTAB == state of TCP
+
+Logged users:
+users   -> command to show users
+-w      -> counts words(each user is one word)
+-l      -> counts lines
+
+Amount of sudo commands:
+journalctl _COMM=sudo | grep COMMAND | wc -l    -> counts amount of sudo commands (lines wheer COMMAND appears)
+
+find signature of VM:
+shasum (name of machine)
